@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+.eggs/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# virtual environments
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data (пользовательские данные не должны попадать в репозиторий)
+data/notes.json
+data/attachments/
+data/backups/
+
+# OS
+.DS_Store
+Thumbs.db

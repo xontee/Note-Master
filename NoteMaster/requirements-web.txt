@@ -1,0 +1,13 @@
+# Зависимости Web-интерфейса NoteMaster.
+# Core (app/core, models, services, repositories, storage) по-прежнему не имеет
+# сторонних зависимостей — только стандартная библиотека Python 3.11+.
+#
+# Web-слой (FastAPI) и тесты API изолированы в отдельном файле, чтобы
+# CLI и Core оставались чистыми от сторонних пакетов.
+
+fastapi>=0.110,<1
+uvicorn[standard]>=0.29,<1
+pydantic>=2.6,<3
+pydantic-settings>=2.2,<3
+httpx>=0.27,<1
+python-multipart>=0.0.9,<1

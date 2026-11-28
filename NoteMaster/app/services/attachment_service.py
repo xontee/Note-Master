@@ -137,6 +137,33 @@ class AttachmentService:
         self._repository.update(note)
         return attachment
 
+    # --------------------------------------------------------------- скачивание
+    def resolve_for_download(
+        self,
+        note_id: UUID | str,
+        attachment_id: UUID | str,
+    ) -> Path:
+        """Возвращает абсолютный путь к физическому файлу для скачивания.
+
+        Единственный аддитивный метод, добавленный для Web-слоя: он позволяет
+        HTTP API отдать файл, не обращаясь к ``AttachmentStorage`` напрямую.
+        Вся логика поиска заметки/вложения и проверки доступности файла
+        остаётся в Core.
+
+        :raises NoteNotFoundError: заметка не найдена.
+        :raises AttachmentNotFoundError: вложение не найдено у заметки.
+        :raises AttachmentStorageError: физический файл отсутствует.
+        """
+
+        note = self._repository.get_by_id(self._coerce_uuid(note_id))
+        attachment = self._find_attachment(note, attachment_id)
+
+        if not self._storage.exists(attachment.relative_path):
+            raise AttachmentStorageError(
+                f"Attachment file is not available: {attachment.id}"
+            )
+        return self._storage.resolve(attachment.relative_path)
+
     # ---------------------------------------------------------------- экспорт
     def export_attachment(
         self,

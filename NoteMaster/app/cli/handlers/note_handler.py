@@ -18,7 +18,7 @@ from app.cli.components.formatting import (
 )
 from app.cli.components.prompts import Prompter
 from app.core.config import Config
-from app.core.exceptions import ValidationError
+from app.core.exceptions import NoteNotFoundError, ValidationError
 from app.models.note import Note
 from app.services.note_service import NoteService
 from app.utils.helpers import parse_tags, short_id
@@ -149,15 +149,25 @@ class NoteHandler:
             self._console.info("Отменено.")
             return None
 
-        if raw.isdigit():
-            index = int(raw)
-            if not 1 <= index <= len(notes):
-                raise ValidationError(
-                    f"Нет заметки с номером {index}. " f"Доступно: 1–{len(notes)}."
-                )
-            return notes[index - 1]
-
-        note = self._notes.resolve_note_id(raw)
+        # Сначала пытаемся разрешить как UUID (полный ID или префикс).
+        # Это позволяет UUID-префиксам, начинающимся с цифры (например
+        # "56151154-..."), корректно обрабатываться — иначе они были бы
+        # ошибочно восприняты как номер строки.
+        try:
+            note = self._notes.resolve_note_id(raw)
+        except ValidationError:
+            raise  # неоднозначный префикс — это реальная ошибка ввода
+        except NoteNotFoundError:
+            # UUID не найден — проверяем, не номер ли это строки.
+            if raw.isdigit():
+                index = int(raw)
+                if not 1 <= index <= len(notes):
+                    raise ValidationError(
+                        f"Нет заметки с номером {index}. " f"Доступно: 1–{len(notes)}."
+                    )
+                return notes[index - 1]
+            # Не число и не UUID — пробрасываем ошибку из resolve_note_id
+            raise
         if restricted and all(candidate.id != note.id for candidate in notes):
             raise ValidationError("Заметка не входит в текущий список.")
         return note
